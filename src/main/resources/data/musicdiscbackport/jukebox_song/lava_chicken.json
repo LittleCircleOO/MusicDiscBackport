@@ -1,0 +1,8 @@
+{
+  "comparator_output": 9,
+  "description": {
+    "translate": "jukebox_song.musicdiscbackport.lava_chicken"
+  },
+  "length_in_seconds": 134.0,
+  "sound_event": "musicdiscbackport:music_disc.lava_chicken"
+}

@@ -1,0 +1,18 @@
+{
+  "music_disc.tears": {
+    "sounds": [
+      {
+        "name": "musicdiscbackport:records/tears",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc.lava_chicken": {
+    "sounds": [
+      {
+        "name": "musicdiscbackport:records/lava_chicken",
+        "stream": true
+      }
+    ]
+  }
+}
