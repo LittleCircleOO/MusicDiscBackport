@@ -1,11 +1,8 @@
 package com.littlecircleoo.musicdiscbackport.jukebox;
 
-import com.littlecircleoo.musicdiscbackport.Musicdiscbackport;
 import com.littlecircleoo.musicdiscbackport.sound.DiscBackportSoundEvents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.JukeboxSong;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
