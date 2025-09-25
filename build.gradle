@@ -10,6 +10,17 @@ group = mod_group_id
 
 repositories {
     mavenLocal()
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = "Modrinth"
+                url = "https://api.modrinth.com/maven"
+            }
+        }
+        filter {
+            includeGroup "maven.modrinth"
+        }
+    }
 }
 
 base {
@@ -101,6 +112,12 @@ dependencies {
     // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
     // compileOnly "mezz.jei:jei-${mc_version}-forge-api:${jei_version}"
     // runtimeOnly "mezz.jei:jei-${mc_version}-forge:${jei_version}"
+
+    //EMI LOOT
+    runtimeOnly "maven.modrinth:emi:1.1.22+1.21.1+neoforge"
+    runtimeOnly "maven.modrinth:emi-loot:0.7.6+1.21+neoforge"
+    runtimeOnly "maven.modrinth:fzzy-config:0.7.2+1.21+neoforge"
+    runtimeOnly "maven.modrinth:kotlin-for-forge:5.10.0"
 
     // Example mod dependency using a mod jar from ./libs with a flat dir repository
     // This maps to ./libs/coolmod-${mc_version}-${coolmod_version}.jar

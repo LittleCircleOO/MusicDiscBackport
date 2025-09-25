@@ -2,17 +2,35 @@ package com.littlecircleoo.musicdiscbackport;
 
 import com.littlecircleoo.musicdiscbackport.items.DiscBackportItems;
 import com.mojang.logging.LogUtils;
+import net.minecraft.advancements.critereon.DamageSourcePredicate;
+import net.minecraft.advancements.critereon.EntityFlagsPredicate;
+import net.minecraft.advancements.critereon.EntityPredicate;
+import net.minecraft.advancements.critereon.TagPredicate;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.*;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.LootPool;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.entries.LootItem;
+import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
+import net.minecraft.world.level.storage.loot.predicates.DamageSourceCondition;
+import net.minecraft.world.level.storage.loot.predicates.LootItemEntityPropertyCondition;
+import net.minecraft.world.level.storage.loot.predicates.LootItemKilledByPlayerCondition;
+import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+import net.neoforged.neoforge.event.LootTableLoadEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -60,7 +78,9 @@ public class Musicdiscbackport {
         modEventBus.addListener(this::addCreative);
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
-        //modContainer.registerConfig(ModConfig.Type.SERVER, Config.SPEC);
+        modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+
+        NeoForge.EVENT_BUS.addListener(this::lootTableSetup);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
@@ -72,10 +92,46 @@ public class Musicdiscbackport {
         if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) event.accept(DiscBackportItems.MUSIC_DISC_LAVA_CHICKEN);
     }
 
+    private void lootTableSetup(final LootTableLoadEvent event) {
+        ResourceKey<LootTable> ghastLoot = ResourceKey.create(Registries.LOOT_TABLE, ResourceLocation.fromNamespaceAndPath("minecraft", "entities/ghast"));
+        ResourceKey<LootTable> zombieLoot = ResourceKey.create(Registries.LOOT_TABLE, ResourceLocation.fromNamespaceAndPath("minecraft", "entities/zombie"));
+
+        boolean allow_tears_disc_loot = Config.ALLOW_TEARS_DISC_LOOT.get();
+        boolean allow_lava_chicken_disc_loot = Config.ALLOW_LAVA_CHICKEN_DISC_LOOT.get();
+
+        if (allow_tears_disc_loot && event.getKey() == ghastLoot) {
+            LOGGER.info("[MusicDiscBackport] Modifying ghast loot table for tears");
+            LootPool.Builder pool =
+                    LootPool.lootPool()
+                            .setRolls(ConstantValue.exactly(1.0F))
+                            .add(LootItem.lootTableItem(DiscBackportItems.MUSIC_DISC_TEARS))
+                            .apply(SetItemCountFunction.setCount(ConstantValue.exactly(1.0F)))
+                            .when(DamageSourceCondition.hasDamageSource(
+                                    DamageSourcePredicate.Builder.damageType()
+                                            .tag(TagPredicate.is(DamageTypeTags.IS_PROJECTILE))
+                                            .direct(EntityPredicate.Builder.entity().of(EntityType.FIREBALL))))
+                            .when(LootItemKilledByPlayerCondition.killedByPlayer());
+            event.getTable().addPool(pool.build());
+        }
+        if (allow_lava_chicken_disc_loot && event.getKey() == zombieLoot) {
+            LOGGER.info("[MusicDiscBackport] Modifying zombie loot table for lava chicken");
+            LootPool.Builder pool =
+                    LootPool.lootPool()
+                            .add(LootItem.lootTableItem(DiscBackportItems.MUSIC_DISC_LAVA_CHICKEN))
+                            .when(LootItemKilledByPlayerCondition.killedByPlayer())
+                            .when(LootItemEntityPropertyCondition.hasProperties(
+                                    LootContext.EntityTarget.THIS,
+                                    EntityPredicate.Builder.entity()
+                                            .flags(EntityFlagsPredicate.Builder.flags().setIsBaby(true))
+                                            .vehicle(EntityPredicate.Builder.entity().of(EntityType.CHICKEN))));
+            event.getTable().addPool(pool.build());
+        }
+    }
+
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
-//        LOGGER.info("[MusicDiscBackport] Loading configuration");
-//        LOGGER.info("[MusicDiscBackport] Tears >> {}", Config.ALLOW_TEARS_DISC_LOOT.get() ? "ENABLED" : "DISABLED");
-//        LOGGER.info("[MusicDiscBackport] LavaChicken >> {}", Config.ALLOW_TEARS_DISC_LOOT.get() ? "ENABLED" : "DISABLED");
+        LOGGER.info("[MusicDiscBackport] Loading configuration");
+        LOGGER.info("[MusicDiscBackport] Tears >> {}", Config.ALLOW_TEARS_DISC_LOOT.get() ? "ENABLED" : "DISABLED");
+        LOGGER.info("[MusicDiscBackport] LavaChicken >> {}", Config.ALLOW_TEARS_DISC_LOOT.get() ? "ENABLED" : "DISABLED");
     }
 }
